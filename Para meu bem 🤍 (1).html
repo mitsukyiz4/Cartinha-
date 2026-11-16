@@ -1,0 +1,1972 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Para meu bem 🤍</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-wine: #3d2133;
+            --bg-plum: #2b1826;
+            --bg-rosewood: #4f2b42;
+            --bg-card: rgba(63, 35, 53, 0.78);
+            --rose-primary: #e48da8;
+            --rose-soft: #ffd6e2;
+            --rose-deep: #b3496b;
+            --accent-gold: #f0ca86;
+            --text-main: #fff8fa;
+            --text-muted: #e6ced6;
+            --border-subtle: rgba(255, 204, 220, 0.28);
+            --border-glow: rgba(240, 202, 134, 0.42);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            background-color: #361d2e;
+            background: radial-gradient(circle at 50% 18%, #633552 0%, var(--bg-wine) 46%, var(--bg-plum) 100%);
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+            min-height: 100dvh;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Canvas de partículas flutuantes (stardust dourado e pétalas rosadas) */
+        #ambientCanvas {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Halo quente atrás do card principal */
+        .ambient-halo {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: min(94vw, 520px);
+            height: min(88vh, 720px);
+            background: radial-gradient(circle, rgba(244, 168, 192, 0.28) 0%, rgba(240, 202, 134, 0.14) 48%, transparent 74%);
+            filter: blur(42px);
+            pointer-events: none;
+            z-index: 1;
+            animation: haloPulse 6s ease-in-out infinite alternate;
+        }
+
+        @keyframes haloPulse {
+            0% { opacity: 0.75; transform: translate(-50%, -50%) scale(0.96); }
+            100% { opacity: 1; transform: translate(-50%, -50%) scale(1.06); }
+        }
+
+        /* Container principal responsivo */
+        .app-shell {
+            width: 100%;
+            max-width: 500px;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            z-index: 5;
+        }
+
+        @media (min-width: 540px) {
+            .app-shell {
+                min-height: 820px;
+                max-height: 92vh;
+                border-radius: 30px;
+                background: linear-gradient(155deg, rgba(77, 42, 65, 0.82), rgba(48, 26, 41, 0.9));
+                border: 1px solid var(--border-subtle);
+                box-shadow: 
+                    0 28px 65px rgba(24, 10, 20, 0.55),
+                    0 0 40px rgba(228, 141, 168, 0.18),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+                backdrop-filter: blur(18px);
+                -webkit-backdrop-filter: blur(18px);
+                margin: 16px 0;
+                padding: 28px;
+            }
+        }
+
+        /* ==========================================
+           TELA 1: ENVELOPE INTERATIVO 3D
+           ========================================== */
+        .envelope-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: 100%;
+            transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .envelope-screen.fade-out {
+            opacity: 0;
+            transform: scale(0.96) translateY(-12px);
+            pointer-events: none;
+            position: absolute;
+        }
+
+        .from-to-badge {
+            font-size: 0.82rem;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: var(--rose-soft);
+            margin-bottom: 28px;
+            font-weight: 500;
+            padding: 8px 20px;
+            border-radius: 999px;
+            background: rgba(255, 214, 226, 0.12);
+            border: 1px solid rgba(255, 214, 226, 0.32);
+            box-shadow: 0 4px 16px rgba(32, 14, 26, 0.25);
+        }
+
+        .from-to-badge span.gold-star {
+            color: var(--accent-gold);
+            margin: 0 6px;
+        }
+
+        /* Palco 3D do Envelope */
+        .envelope-stage {
+            perspective: 1100px;
+            margin-bottom: 34px;
+            cursor: pointer;
+        }
+
+        .envelope-3d {
+            width: 300px;
+            height: 200px;
+            position: relative;
+            border-radius: 16px;
+            background: linear-gradient(145deg, #693b57, #4a273d);
+            box-shadow: 
+                0 22px 45px rgba(26, 11, 21, 0.5),
+                0 0 0 1px rgba(255, 214, 226, 0.36),
+                inset 0 1px 0 rgba(255, 255, 255, 0.18);
+            transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease;
+            transform-style: preserve-3d;
+        }
+
+        .envelope-stage:hover .envelope-3d:not(.is-opening) {
+            transform: translateY(-6px) rotateX(4deg);
+            box-shadow: 
+                0 28px 55px rgba(26, 11, 21, 0.58),
+                0 0 32px rgba(244, 168, 192, 0.34),
+                0 0 0 1px rgba(240, 202, 134, 0.55);
+        }
+
+        /* Cartão interno claro que sobe ao abrir o envelope */
+        .inner-letter-preview {
+            position: absolute;
+            left: 16px;
+            right: 16px;
+            bottom: 14px;
+            height: 168px;
+            background: linear-gradient(180deg, #fff9fb 0%, #fae8ef 100%);
+            border-radius: 10px;
+            padding: 18px 16px;
+            color: #4a2337;
+            box-shadow: 0 6px 20px rgba(32, 14, 26, 0.3);
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            transition: transform 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.25s;
+        }
+
+        .inner-letter-preview .preview-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            font-size: 1.28rem;
+            font-weight: 600;
+            color: #8f3555;
+            margin-bottom: 6px;
+        }
+
+        .inner-letter-preview .preview-lines {
+            width: 75%;
+            height: 3px;
+            background: rgba(143, 53, 85, 0.22);
+            border-radius: 2px;
+            margin-top: 6px;
+        }
+
+        .envelope-3d.is-opening .inner-letter-preview {
+            transform: translateY(-78px);
+        }
+
+        /* Bolso frontal do envelope */
+        .envelope-pocket {
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            overflow: hidden;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        .envelope-pocket::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(102, 57, 85, 0.96) 0%, rgba(69, 36, 57, 0.98) 100%);
+            clip-path: polygon(0 0, 50% 54%, 100% 0, 100% 100%, 0 100%);
+            border-bottom: 1px solid rgba(255, 214, 226, 0.35);
+        }
+
+        .envelope-pocket::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, transparent 42%, rgba(255, 214, 226, 0.16) 100%);
+            clip-path: polygon(0 100%, 50% 48%, 100% 100%);
+        }
+
+        /* Aba triangular superior com rotação 3D */
+        .envelope-flap {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 118px;
+            background: linear-gradient(180deg, #7c4567 0%, #592f4a 100%);
+            clip-path: polygon(0 0, 100% 0, 50% 100%);
+            border-top-left-radius: 16px;
+            border-top-right-radius: 16px;
+            transform-origin: top center;
+            transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1), z-index 0.1s linear 0.3s;
+            z-index: 4;
+            box-shadow: 0 8px 18px rgba(26, 11, 21, 0.32);
+        }
+
+        .envelope-flap::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.25);
+            background: linear-gradient(180deg, rgba(255, 214, 226, 0.18), transparent 60%);
+        }
+
+        .envelope-3d.is-opening .envelope-flap {
+            transform: rotateX(180deg);
+            z-index: 1;
+        }
+
+        /* Selo de cera rosado pulsante */
+        .wax-seal {
+            position: absolute;
+            top: 86px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 30%, #f5abc2 0%, #cc5b7e 62%, #9c3858 100%);
+            border: 1.5px solid rgba(255, 240, 245, 0.65);
+            box-shadow: 
+                0 6px 18px rgba(26, 11, 21, 0.45),
+                inset 0 2px 5px rgba(255, 255, 255, 0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            z-index: 5;
+            transition: opacity 0.35s ease, transform 0.35s ease;
+            animation: pulseSeal 2.2s infinite ease-in-out;
+        }
+
+        .envelope-3d.is-opening .wax-seal {
+            opacity: 0;
+            transform: translateX(-50%) scale(0.7);
+            pointer-events: none;
+        }
+
+        @keyframes pulseSeal {
+            0%, 100% {
+                transform: translateX(-50%) scale(1);
+                box-shadow: 0 0 0 0 rgba(255, 194, 214, 0.55), 0 6px 18px rgba(26, 11, 21, 0.45);
+            }
+            50% {
+                transform: translateX(-50%) scale(1.06);
+                box-shadow: 0 0 0 13px rgba(255, 194, 214, 0), 0 8px 22px rgba(26, 11, 21, 0.45);
+            }
+        }
+
+        .envelope-hint {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            font-weight: 400;
+        }
+
+        .primary-pill-btn {
+            background: linear-gradient(135deg, #e893ae 0%, #c4587b 100%);
+            color: #ffffff;
+            border: 1px solid rgba(255, 236, 242, 0.4);
+            padding: 14px 36px;
+            font-size: 0.96rem;
+            font-weight: 500;
+            border-radius: 999px;
+            cursor: pointer;
+            box-shadow: 0 10px 26px rgba(196, 88, 123, 0.42);
+            transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+            letter-spacing: 0.4px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .primary-pill-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 32px rgba(228, 141, 168, 0.55);
+            filter: brightness(1.06);
+        }
+
+        .primary-pill-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        /* ==========================================
+           CONTROLE DE ÁUDIO AMBIENTE (CAIXINHA DE MÚSICA)
+           ========================================== */
+        .ambient-audio-bar {
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+        }
+
+        .audio-toggle-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 224, 234, 0.1);
+            border: 1px solid rgba(255, 204, 220, 0.32);
+            color: var(--rose-soft);
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 0.74rem;
+            letter-spacing: 0.4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .audio-toggle-btn:hover {
+            background: rgba(255, 224, 234, 0.2);
+            border-color: var(--accent-gold);
+        }
+
+        .audio-waves {
+            display: inline-flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 11px;
+        }
+
+        .audio-waves span {
+            width: 2px;
+            height: 4px;
+            background: var(--accent-gold);
+            border-radius: 2px;
+            transition: height 0.2s ease;
+        }
+
+        .audio-toggle-btn.playing .audio-waves span:nth-child(1) {
+            animation: wavePulse 0.9s ease-in-out infinite;
+        }
+        .audio-toggle-btn.playing .audio-waves span:nth-child(2) {
+            animation: wavePulse 0.7s ease-in-out 0.2s infinite;
+        }
+        .audio-toggle-btn.playing .audio-waves span:nth-child(3) {
+            animation: wavePulse 1.1s ease-in-out 0.35s infinite;
+        }
+
+        @keyframes wavePulse {
+            0%, 100% { height: 3px; }
+            50% { height: 11px; }
+        }
+
+        /* ==========================================
+           TELA 2: LEITURA FLUIDA DOS 5 CAPÍTULOS
+           ========================================== */
+        .reader-screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.65s ease, transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+            touch-action: pan-y;
+        }
+
+        .reader-screen.active {
+            display: flex;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Topo: Indicador de capítulo e barras clicáveis */
+        .reader-top-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 0 2px;
+        }
+
+        .meta-recipient {
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            font-size: 1.12rem;
+            color: var(--rose-soft);
+        }
+
+        .meta-counter {
+            font-size: 0.75rem;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .progress-bars {
+            display: flex;
+            gap: 7px;
+            width: 100%;
+            margin-bottom: 18px;
+        }
+
+        .progress-segment {
+            flex: 1;
+            height: 5px;
+            background: rgba(255, 224, 234, 0.18);
+            border-radius: 999px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            position: relative;
+        }
+
+        .progress-segment:hover {
+            background: rgba(244, 168, 192, 0.55);
+        }
+
+        .progress-segment.completed {
+            background: rgba(244, 168, 192, 0.65);
+        }
+
+        .progress-segment.active {
+            background: linear-gradient(90deg, var(--rose-soft), var(--accent-gold));
+            box-shadow: 0 0 12px rgba(240, 202, 134, 0.55);
+        }
+
+        /* Cartão de leitura do capítulo - translúcido e luminoso */
+        .chapter-card {
+            background: linear-gradient(155deg, rgba(74, 41, 63, 0.82), rgba(53, 28, 45, 0.88));
+            border: 1px solid rgba(255, 204, 220, 0.28);
+            border-radius: 24px;
+            padding: 26px 22px 22px 22px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 
+                0 18px 40px rgba(24, 10, 20, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            animation: chapterFadeIn 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        @keyframes chapterFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chapter-scroll-area {
+            overflow-y: auto;
+            padding-right: 4px;
+            max-height: calc(100dvh - 220px);
+        }
+
+        @media (min-width: 540px) {
+            .chapter-scroll-area {
+                max-height: 550px;
+            }
+        }
+
+        .chapter-scroll-area::-webkit-scrollbar {
+            width: 4px;
+        }
+        .chapter-scroll-area::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .chapter-scroll-area::-webkit-scrollbar-thumb {
+            background: rgba(255, 204, 220, 0.35);
+            border-radius: 4px;
+        }
+
+        .chapter-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2.2px;
+            color: var(--rose-soft);
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .chapter-kicker .star {
+            color: var(--accent-gold);
+        }
+
+        .chapter-paragraph {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(1.22rem, 3.8vw, 1.34rem);
+            line-height: 1.72;
+            color: #fff8fa;
+            font-weight: 400;
+            margin-bottom: 18px;
+            opacity: 0;
+            transform: translateY(6px);
+            animation: paragraphReveal 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        .chapter-paragraph:nth-of-type(1) { animation-delay: 0.08s; }
+        .chapter-paragraph:nth-of-type(2) { animation-delay: 0.22s; }
+        .chapter-paragraph:nth-of-type(3) { animation-delay: 0.36s; }
+        .chapter-paragraph:nth-of-type(4) { animation-delay: 0.48s; }
+        .chapter-paragraph:nth-of-type(5) { animation-delay: 0.60s; }
+        .chapter-paragraph:nth-of-type(6) { animation-delay: 0.72s; }
+
+        @keyframes paragraphReveal {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .poetic-accent {
+            font-style: italic;
+            color: #ffd6e4;
+            font-weight: 500;
+        }
+
+        .gold-accent {
+            font-style: italic;
+            color: var(--accent-gold);
+            font-weight: 500;
+        }
+
+        .chapter-paragraph:last-child {
+            margin-bottom: 6px;
+        }
+
+        /* Destaque do Capítulo IV */
+        .love-highlight-box {
+            background: linear-gradient(145deg, rgba(255, 194, 214, 0.14) 0%, rgba(240, 202, 134, 0.09) 100%);
+            border: 1px solid rgba(255, 204, 220, 0.34);
+            border-radius: 18px;
+            padding: 20px 18px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .love-highlight-box .chapter-paragraph {
+            font-size: clamp(1.16rem, 3.6vw, 1.26rem);
+            line-height: 1.68;
+            margin-bottom: 14px;
+        }
+
+        .pills-hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .pills-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .essence-pill {
+            background: rgba(255, 204, 220, 0.16);
+            border: 1px solid rgba(255, 204, 220, 0.38);
+            color: var(--rose-soft);
+            padding: 7px 13px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            letter-spacing: 0.2px;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .essence-pill:hover {
+            background: rgba(255, 204, 220, 0.28);
+            transform: translateY(-1px);
+        }
+
+        .essence-pill.selected {
+            background: linear-gradient(135deg, rgba(232, 147, 174, 0.45), rgba(240, 202, 134, 0.3));
+            border-color: var(--accent-gold);
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(240, 202, 134, 0.25);
+        }
+
+        /* Cartão-bilhete revelado ao tocar nas tags */
+        .tag-note-card {
+            margin-top: 14px;
+            padding: 13px 15px;
+            border-radius: 14px;
+            background: rgba(45, 22, 37, 0.72);
+            border: 1px dashed rgba(240, 202, 134, 0.55);
+            color: var(--text-main);
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            font-size: 1.14rem;
+            line-height: 1.55;
+            display: none;
+            animation: paragraphReveal 0.4s ease forwards;
+        }
+
+        .tag-note-card.visible {
+            display: block;
+        }
+
+        .tag-note-label {
+            display: block;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-style: normal;
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--accent-gold);
+            margin-bottom: 4px;
+        }
+
+        /* Capítulo V: Molduras Spotify Estilo Vinil + Buquê SVG */
+        .music-dedication {
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            font-size: 1.18rem;
+            line-height: 1.6;
+            color: var(--rose-soft);
+            margin-bottom: 12px;
+        }
+
+        .vinyl-player-card {
+            position: relative;
+            background: linear-gradient(135deg, rgba(54, 28, 46, 0.9), rgba(74, 38, 62, 0.9));
+            border: 1px solid rgba(240, 202, 134, 0.38);
+            border-radius: 16px;
+            padding: 10px;
+            margin-bottom: 14px;
+            box-shadow: 0 10px 25px rgba(24, 10, 20, 0.35);
+            overflow: hidden;
+        }
+
+        .vinyl-header-strip {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 4px 8px 4px;
+            font-size: 0.72rem;
+            color: var(--accent-gold);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .vinyl-disc-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .mini-vinyl {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: repeating-radial-gradient(circle, #2b1523 0, #2b1523 2px, #6e3b5a 3px, #2b1523 4px);
+            border: 1px solid var(--accent-gold);
+            position: relative;
+            animation: spinVinyl 6s linear infinite;
+        }
+
+        .mini-vinyl::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--rose-soft);
+        }
+
+        @keyframes spinVinyl {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .bouquet-showcase {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 8px 0 6px 0;
+            position: relative;
+        }
+
+        .bouquet-svg-animated {
+            transform-origin: bottom center;
+            animation: bouquetSway 5.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes bouquetSway {
+            0% { transform: rotate(-1.8deg) translateY(0); }
+            100% { transform: rotate(1.8deg) translateY(-2px); }
+        }
+
+        .bouquet-glow {
+            position: absolute;
+            width: 130px;
+            height: 130px;
+            background: radial-gradient(circle, rgba(255, 194, 214, 0.34) 0%, transparent 70%);
+            filter: blur(14px);
+            pointer-events: none;
+        }
+
+        /* Botão Bilhete Secreto & Carimbo Postal */
+        .secret-note-trigger {
+            width: 100%;
+            margin: 12px 0 12px 0;
+            padding: 11px 16px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(240, 202, 134, 0.18), rgba(232, 147, 174, 0.16));
+            border: 1px dashed rgba(240, 202, 134, 0.65);
+            color: var(--accent-gold);
+            font-size: 0.82rem;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.28s ease;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .secret-note-trigger:hover {
+            background: linear-gradient(135deg, rgba(240, 202, 134, 0.28), rgba(232, 147, 174, 0.24));
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(240, 202, 134, 0.2);
+        }
+
+        .postal-stamp-row {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .postal-wax-stamp {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 10px;
+            border: 1px dashed rgba(240, 202, 134, 0.5);
+            background: rgba(240, 202, 134, 0.08);
+            color: var(--accent-gold);
+            font-size: 0.72rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transform: rotate(-1.2deg);
+        }
+
+        .postal-wax-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 30%, #f5abc2, #b3496b);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.55rem;
+            color: #fff;
+            box-shadow: 0 2px 6px rgba(24, 10, 20, 0.35);
+        }
+
+        /* Modal Translúcido do Bilhete Secreto */
+        .secret-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(34, 15, 28, 0.78);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 60;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.38s ease;
+        }
+
+        .secret-modal-backdrop.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .secret-modal-card {
+            width: 100%;
+            max-width: 400px;
+            background: linear-gradient(155deg, rgba(84, 45, 70, 0.96), rgba(53, 27, 44, 0.98));
+            border: 1px solid rgba(240, 202, 134, 0.5);
+            border-radius: 26px;
+            padding: 30px 24px;
+            text-align: center;
+            box-shadow: 0 25px 60px rgba(20, 8, 16, 0.65), 0 0 35px rgba(232, 147, 174, 0.25);
+            transform: scale(0.94) translateY(10px);
+            transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .secret-modal-backdrop.open .secret-modal-card {
+            transform: scale(1) translateY(0);
+        }
+
+        .secret-modal-kicker {
+            font-size: 0.72rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--accent-gold);
+            margin-bottom: 12px;
+        }
+
+        .secret-modal-quote {
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            font-size: 1.34rem;
+            line-height: 1.65;
+            color: #fff8fa;
+            margin-bottom: 22px;
+        }
+
+        .signature-block {
+            text-align: center;
+            margin-top: 4px;
+        }
+
+        .signature-main {
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            font-size: 1.34rem;
+            color: var(--rose-soft);
+            font-weight: 500;
+        }
+
+        .signature-sub {
+            font-size: 0.78rem;
+            color: var(--accent-gold);
+            letter-spacing: 1.2px;
+            margin-top: 2px;
+        }
+
+        /* Barra inferior de navegação */
+        .chapter-nav-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-top: 18px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255, 214, 226, 0.14);
+        }
+
+        .nav-btn {
+            flex: 1;
+            max-width: 155px;
+            padding: 12px 18px;
+            border-radius: 999px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .nav-btn.secondary {
+            background: rgba(255, 224, 234, 0.08);
+            border: 1px solid rgba(255, 204, 220, 0.28);
+            color: var(--text-muted);
+        }
+
+        .nav-btn.secondary:hover {
+            border-color: var(--rose-soft);
+            color: #ffffff;
+            background: rgba(255, 224, 234, 0.16);
+        }
+
+        .nav-btn.primary {
+            background: linear-gradient(135deg, #e893ae, #c4587b);
+            border: 1px solid rgba(255, 236, 242, 0.35);
+            color: #ffffff;
+            box-shadow: 0 6px 18px rgba(196, 88, 123, 0.36);
+            margin-left: auto;
+        }
+
+        .nav-btn.primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 24px rgba(228, 141, 168, 0.48);
+        }
+
+        .receive-heart-btn {
+            flex: 2;
+            padding: 13px 20px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #e893ae 0%, #c4587b 100%);
+            border: 1px solid rgba(255, 236, 242, 0.4);
+            color: #ffffff;
+            font-size: 0.92rem;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(196, 88, 123, 0.42);
+            transition: all 0.3s ease;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .receive-heart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(228, 141, 168, 0.55);
+        }
+
+        /* ==========================================
+           TELA FINAL DE CARINHO (APÓS RECEBER)
+           ========================================== */
+        .celebration-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 24px 16px;
+            animation: chapterFadeIn 0.6s ease;
+        }
+
+        .celebration-screen.active {
+            display: flex;
+        }
+
+        .celebration-heart-circle {
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 194, 214, 0.32) 0%, rgba(255, 194, 214, 0.1) 100%);
+            border: 1px solid rgba(255, 214, 226, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 22px;
+            box-shadow: 0 0 35px rgba(232, 147, 174, 0.38);
+            animation: pulseHeartCircle 2.4s infinite ease-in-out;
+        }
+
+        @keyframes pulseHeartCircle {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+
+        .celebration-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            font-size: 2rem;
+            color: var(--rose-soft);
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .celebration-text {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.24rem;
+            line-height: 1.65;
+            color: #fff8fa;
+            max-width: 360px;
+            margin-bottom: 20px;
+        }
+
+        /* Cartão-Lembrança Colecionável */
+        .keepsake-card {
+            width: 100%;
+            max-width: 370px;
+            background: linear-gradient(145deg, rgba(82, 44, 68, 0.9), rgba(52, 26, 43, 0.95));
+            border: 1px solid rgba(240, 202, 134, 0.48);
+            border-radius: 20px;
+            padding: 18px 20px;
+            margin-bottom: 22px;
+            box-shadow: 0 15px 35px rgba(24, 10, 20, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+            position: relative;
+        }
+
+        .keepsake-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.6px;
+            color: var(--accent-gold);
+            padding-bottom: 10px;
+            margin-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 214, 226, 0.16);
+        }
+
+        .keepsake-body {
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            font-size: 1.2rem;
+            color: var(--rose-soft);
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .keepsake-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .celebration-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            max-width: 330px;
+        }
+
+        .copy-reply-btn {
+            background: linear-gradient(135deg, #e893ae, #c4587b);
+            border: 1px solid rgba(255, 236, 242, 0.38);
+            color: #ffffff;
+            padding: 13px 22px;
+            border-radius: 999px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(196, 88, 123, 0.42);
+            transition: all 0.25s ease;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .copy-reply-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(228, 141, 168, 0.55);
+        }
+
+        .copy-feedback-toast {
+            font-size: 0.78rem;
+            color: var(--accent-gold);
+            min-height: 18px;
+            margin-top: 2px;
+            transition: opacity 0.3s ease;
+        }
+
+        .reread-btn {
+            background: rgba(255, 224, 234, 0.1);
+            border: 1px solid rgba(255, 204, 220, 0.38);
+            color: var(--rose-soft);
+            padding: 11px 24px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .reread-btn:hover {
+            background: rgba(255, 224, 234, 0.22);
+            color: #ffffff;
+        }
+
+        /* Corações / pétalas da celebração */
+        .burst-particle {
+            position: fixed;
+            pointer-events: none;
+            z-index: 99;
+            font-size: 1.2rem;
+            animation: floatBurst var(--dur, 3.2s) cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        @keyframes floatBurst {
+            0% {
+                opacity: 0;
+                transform: translate(0, 0) scale(0.5) rotate(0deg);
+            }
+            15% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                transform: translate(var(--tx, 0px), var(--ty, -260px)) scale(1.15) rotate(var(--rot, 45deg));
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Partículas luminosas e pétalas no fundo -->
+    <canvas id="ambientCanvas"></canvas>
+    <div class="ambient-halo"></div>
+
+    <main class="app-shell">
+        <!-- ==========================================
+             TELA 1: ENVELOPE INTERATIVO 3D
+             ========================================== -->
+        <section id="envelopeScreen" class="envelope-screen">
+            <div class="from-to-badge">
+                De: Iza <span class="gold-star">✦</span> Para: meu bem
+            </div>
+
+            <div class="envelope-stage" onclick="triggerOpenEnvelope()" role="button" tabindex="0" aria-label="Abrir cartinha para meu bem">
+                <div id="envelope3D" class="envelope-3d">
+                    <!-- Cartão que desliza para cima ao abrir -->
+                    <div class="inner-letter-preview">
+                        <div class="preview-title">Para meu bem 🤍</div>
+                        <div class="preview-lines"></div>
+                        <div class="preview-lines" style="width: 60%;"></div>
+                        <div class="preview-lines" style="width: 45%;"></div>
+                    </div>
+
+                    <!-- Bolso frontal -->
+                    <div class="envelope-pocket"></div>
+
+                    <!-- Aba triangular superior -->
+                    <div class="envelope-flap"></div>
+
+                    <!-- Selo de cera -->
+                    <div class="wax-seal">🤍</div>
+                </div>
+            </div>
+
+            <p class="envelope-hint">Toque no selo ou no botão para abrir</p>
+            <button class="primary-pill-btn" onclick="triggerOpenEnvelope()">Abrir Cartinha</button>
+        </section>
+
+        <!-- ==========================================
+             TELA 2: LEITURA DOS 5 CAPÍTULOS
+             ========================================== -->
+        <section id="readerScreen" class="reader-screen">
+            <div class="ambient-audio-bar">
+                <button id="audioToggleBtn" class="audio-toggle-btn" onclick="toggleAmbientMusic()" aria-label="Alternar música de fundo">
+                    <span class="audio-waves" aria-hidden="true">
+                        <span></span><span></span><span></span>
+                    </span>
+                    <span id="audioStatusLabel">Música de fundo: Desligada</span>
+                </button>
+            </div>
+
+            <div class="reader-top-meta">
+                <span class="meta-recipient">Para meu bem 🤍</span>
+                <span id="chapterCounter" class="meta-counter">Capítulo 1 de 5</span>
+            </div>
+
+            <!-- Barras de progresso clicáveis -->
+            <div class="progress-bars" id="progressBars">
+                <button class="progress-segment active" onclick="goToChapter(0)" aria-label="Capítulo 1"></button>
+                <button class="progress-segment" onclick="goToChapter(1)" aria-label="Capítulo 2"></button>
+                <button class="progress-segment" onclick="goToChapter(2)" aria-label="Capítulo 3"></button>
+                <button class="progress-segment" onclick="goToChapter(3)" aria-label="Capítulo 4"></button>
+                <button class="progress-segment" onclick="goToChapter(4)" aria-label="Capítulo 5"></button>
+            </div>
+
+            <!-- CAPÍTULO I -->
+            <article class="chapter-card chapter-view" data-chapter="0">
+                <div class="chapter-scroll-area">
+                    <div class="chapter-kicker">Capítulo I <span class="star">✦</span> O Início</div>
+                    <p class="chapter-paragraph">
+                        Eu queria conseguir encontrar as palavras certas para descrever tudo o que sinto por você, mas, sinceramente, não sei se existe uma maneira de colocar em palavras tudo aquilo que gostaria de dizer. Ainda assim, queria tentar, <span class="poetic-accent">porque você é alguém por quem tenho um carinho enorme</span> e acho que merece saber disso.
+                    </p>
+                    <p class="chapter-paragraph">
+                        Primeiramente, quero que saiba que gosto muito de você. Gosto do seu jeitinho, da sua personalidade, das suas manias, da sua voz, das suas implicâncias e até dessas pequenas coisas que talvez você nem perceba, mas que fazem parte de quem você é. Gosto de conhecer seus gostos, suas opiniões, suas histórias e <span class="gold-accent">descobrir aos pouquinhos cada detalhe seu</span>.
+                    </p>
+                    <p class="chapter-paragraph">
+                        Gosto de ter você na minha vida, de conhecer cada vez mais sobre você. Talvez você nem tenha dimensão do quanto algumas pequenas coisas suas conseguem deixar meu dia mais feliz. Às vezes, uma conversa boba, uma ligação ou <span class="poetic-accent">simplesmente ouvir sua voz já é suficiente para tornar meu dia um pouco melhor</span>.
+                    </p>
+                </div>
+                <div class="chapter-nav-footer">
+                    <span></span>
+                    <button class="nav-btn primary" onclick="nextChapter()">Próximo ➔</button>
+                </div>
+            </article>
+
+            <!-- CAPÍTULO II -->
+            <article class="chapter-card chapter-view" data-chapter="1" style="display: none;">
+                <div class="chapter-scroll-area">
+                    <div class="chapter-kicker">Capítulo II <span class="star">✦</span> Sinceridade</div>
+                    <p class="chapter-paragraph">
+                        Sei que pode não me ver da mesma forma, apesar de dizer que sou alguém que você considera especial. E tudo bem, não estou escrevendo isso esperando que você sinta exatamente o mesmo que eu ou para colocar qualquer tipo de expectativa sobre você. Só quero que saiba que, independentemente disso, <span class="gold-accent">o que sinto é verdadeiro</span>. Eu realmente gosto muito de você, me importo com você, com seus sentimentos, com seus dias bons e ruins, com suas conquistas e até com aquelas pequenas coisas que parecem não ter tanta importância. Quero ver você feliz, realizando seus sonhos, conquistando aquilo que deseja e <span class="poetic-accent">encontrando motivos para se orgulhar sempre de si mesma</span>.
+                    </p>
+                    <p class="chapter-paragraph">
+                        Quero que saiba tbm que não precisa estar sempre bem, ter sempre algo interessante para dizer ou esconder seus dias difíceis. Você não precisa ser uma versão perfeita de si mesma para receber carinho. <span class="poetic-accent">Eu gosto de você como você é</span>, com suas qualidades, seus defeitos, suas manias e até com aqueles lados que talvez você mesma tenha dificuldade em aceitar. Espero que nunca se esqueça de que é uma pessoa cheia de qualidades e que merece ser tratada com carinho, respeito, paciência e compreensão.
+                    </p>
+                </div>
+                <div class="chapter-nav-footer">
+                    <button class="nav-btn secondary" onclick="prevChapter()">← Anterior</button>
+                    <button class="nav-btn primary" onclick="nextChapter()">Próximo ➔</button>
+                </div>
+            </article>
+
+            <!-- CAPÍTULO III -->
+            <article class="chapter-card chapter-view" data-chapter="2" style="display: none;">
+                <div class="chapter-scroll-area">
+                    <div class="chapter-kicker">Capítulo III <span class="star">✦</span> Torcendo por você</div>
+                    <p class="chapter-paragraph">
+                        Se pudesse, faria uma lista interminável de motivos pelos quais amo você, mas acho que alguns deles são justamente aqueles detalhes que não cabem tão facilmente em uma lista. É o conjunto de tudo que faz você ser quem é. Não é apenas uma característica ou outra, não é somente seu sorriso, sua voz ou seu jeito de falar. <span class="gold-accent">É você por inteiro.</span>
+                    </p>
+                    <p class="chapter-paragraph">
+                        Também quero que saiba que torço muito por você. Pelos seus planos, pelos seus sonhos, por tudo aquilo que deseja conquistar. Espero que a vida seja gentil contigo, que você encontre pessoas e lugares que façam bem ao seu coração e <span class="poetic-accent">que nunca precise diminuir quem é para caber na vida de alguém</span>. Quero que tenha muitas razões para sorrir e que, mesmo quando as coisas não saírem como gostaria, consiga lembrar da pessoa incrível que é.
+                    </p>
+                    <p class="chapter-paragraph">
+                        Talvez eu não consiga demonstrar tudo da maneira que gostaria, talvez às vezes me faltem palavras ou eu não saiba exatamente como expressar o que sinto, mas nunca quero que confunda isso com falta de carinho. Você é importante para mim e eu gosto de demonstrar isso sempre que posso, mesmo nas pequenas coisas.
+                    </p>
+                    <p class="chapter-paragraph">
+                        Enfim, poderia continuar escrevendo por muito mais tempo, mas não queria transformar essa carta em um livro inteiro. Só queria deixar registrado que gosto muito de você, que sou feliz por ter conhecido você.
+                    </p>
+                    <p class="chapter-paragraph">
+                        Obrigada por ser você, por compartilhar um pouquinho da sua vida comigo e por permitir que eu faça parte dela tbm, mesmo que talvez seja por hora.
+                    </p>
+                    <p class="chapter-paragraph">
+                        <span class="gold-accent">Eu amo você, meu bem.</span> Por tudo que você é e por todos esses pequenos detalhes que fazem de você alguém tão única para mim.
+                    </p>
+                </div>
+                <div class="chapter-nav-footer">
+                    <button class="nav-btn secondary" onclick="prevChapter()">← Anterior</button>
+                    <button class="nav-btn primary" onclick="nextChapter()">Próximo ➔</button>
+                </div>
+            </article>
+
+            <!-- CAPÍTULO IV -->
+            <article class="chapter-card chapter-view" data-chapter="3" style="display: none;">
+                <div class="chapter-scroll-area">
+                    <div class="chapter-kicker">Capítulo IV <span class="star">✦</span> O que mais amo em você</div>
+                    <div class="love-highlight-box">
+                        <p class="chapter-paragraph">
+                            O que mais amo em você é simplesmente tudo que faz você ser quem é. Amo seu jeitinho, sua personalidade, suas pequenas manias e até aquelas implicâncias que são tão suas. Amo a forma como você consegue tornar coisas simples em momentos especiais. Amo suas qualidades, seus defeitos e até aqueles detalhes que talvez você mesma não considere tão importantes. Admiro sua força, sua determinação e a pessoa que você é, mesmo quando você não consegue enxergar todas as coisas boas que existem em si mesma. Gosto de cada pedacinho seu, inclusive daqueles que você talvez ache difíceis de gostar. E, se me perguntassem o que mais amo em você, acho que não conseguiria escolher uma única coisa, porque não é sobre uma característica específica. <span class="gold-accent">É sobre você, por inteiro.</span>
+                        </p>
+                        <div class="pills-hint">✦ Toque em um detalhe para abrir um bilhetinho:</div>
+                        <div class="pills-row">
+                            <button type="button" class="essence-pill" onclick="revealTagNote(this, 'jeitinho', event)">✨ Seu jeitinho</button>
+                            <button type="button" class="essence-pill" onclick="revealTagNote(this, 'essencia', event)">🤍 Sua essência</button>
+                            <button type="button" class="essence-pill" onclick="revealTagNote(this, 'inteiro', event)">🌹 Você por inteiro</button>
+                            <button type="button" class="essence-pill" onclick="revealTagNote(this, 'voz', event)">🌙 Sua voz & calma</button>
+                        </div>
+                        <div id="tagNoteCard" class="tag-note-card" aria-live="polite">
+                            <span id="tagNoteTitle" class="tag-note-label"></span>
+                            <span id="tagNoteBody"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="chapter-nav-footer">
+                    <button class="nav-btn secondary" onclick="prevChapter()">← Anterior</button>
+                    <button class="nav-btn primary" onclick="nextChapter()">Próximo ➔</button>
+                </div>
+            </article>
+
+            <!-- CAPÍTULO V -->
+            <article class="chapter-card chapter-view" data-chapter="4" style="display: none;">
+                <div class="chapter-scroll-area">
+                    <div class="chapter-kicker">Capítulo V <span class="star">✦</span> Nossa Música & Carinho</div>
+                    <p class="chapter-paragraph" style="margin-bottom: 12px;">
+                        E, por último, <span class="gold-accent">espero que você nunca duvide do quanto é maravilhosa</span>. Que essas palavras sejam apenas uma pequena lembrança de todo o carinho que tenho por você. Se eu pudesse, faria você enxergar pelos meus olhos todas as coisas bonitas que vejo em você.
+                    </p>
+                    <p class="music-dedication">
+                        Escolhi essa música da Lana Del Rey porque sei que ela é a sua cantora favorita, e quis colocar algo dela que expressasse todo esse amor...
+                    </p>
+
+                    <!-- Moldura Spotify estilo vinil (Lana Del Rey) -->
+                    <div class="vinyl-player-card">
+                        <div class="vinyl-header-strip">
+                            <span class="vinyl-disc-badge">
+                                <span class="mini-vinyl"></span>
+                                Trilha Especial
+                            </span>
+                            <span>Lana Del Rey</span>
+                        </div>
+                        <iframe 
+                            style="border-radius:10px; display:block;" 
+                            src="https://open.spotify.com/embed/track/1o82DwNisONAd2mu1RcGE6?utm_source=generator&theme=0" 
+                            width="100%" 
+                            height="80" 
+                            frameBorder="0" 
+                            allowfullscreen="" 
+                            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+                            loading="lazy">
+                        </iframe>
+                    </div>
+
+                    <!-- Buquê de Rosas e Lírios em SVG -->
+                    <div class="bouquet-showcase">
+                        <div class="bouquet-glow"></div>
+                        <svg class="bouquet-svg-animated" width="118" height="118" viewBox="0 0 220 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Papel de embrulho delicado do buquê -->
+                            <path d="M55 85 L110 175 L165 85 Q110 65 55 85 Z" fill="rgba(255, 214, 226, 0.2)" stroke="rgba(240, 202, 134, 0.5)" stroke-width="1.2"/>
+                            <!-- Hastes -->
+                            <path d="M104 148 L92 196 M110 148 L110 202 M116 148 L128 196" stroke="#6d9c61" stroke-width="3.2" stroke-linecap="round"/>
+                            <!-- Folhagens -->
+                            <path d="M68 106 Q44 94 60 122 Q78 118 68 106 Z" fill="#78ab6b"/>
+                            <path d="M152 106 Q176 94 160 122 Q142 118 152 106 Z" fill="#78ab6b"/>
+                            <path d="M84 56 Q72 34 94 42 Q96 56 84 56 Z" fill="#639157"/>
+                            <path d="M136 56 Q148 34 126 42 Q124 56 136 56 Z" fill="#639157"/>
+
+                            <!-- Lírio Branco Esquerdo -->
+                            <g transform="translate(76, 82)">
+                                <path d="M0 0 Q-14 -24 8 -34 Q20 -12 0 0 Z" fill="#fff9fb" stroke="#ffd6e2" stroke-width="1.4"/>
+                                <path d="M0 0 Q-26 -6 -20 16 Q4 12 0 0 Z" fill="#fff9fb" stroke="#ffd6e2" stroke-width="1.4"/>
+                                <path d="M0 0 Q6 24 22 12 Q12 -6 0 0 Z" fill="#fff9fb" stroke="#ffd6e2" stroke-width="1.4"/>
+                                <circle cx="0" cy="-2" r="3.5" fill="#f0ca86"/>
+                            </g>
+
+                            <!-- Lírio Branco Direito -->
+                            <g transform="translate(144, 82)">
+                                <path d="M0 0 Q14 -24 -8 -34 Q-20 -12 0 0 Z" fill="#fff9fb" stroke="#ffd6e2" stroke-width="1.4"/>
+                                <path d="M0 0 Q26 -6 20 16 Q-4 12 0 0 Z" fill="#fff9fb" stroke="#ffd6e2" stroke-width="1.4"/>
+                                <path d="M0 0 Q-6 24 -22 12 Q-12 -6 0 0 Z" fill="#fff9fb" stroke="#ffd6e2" stroke-width="1.4"/>
+                                <circle cx="0" cy="-2" r="3.5" fill="#f0ca86"/>
+                            </g>
+
+                            <!-- Rosa Secundária Inferior Esquerda -->
+                            <g transform="translate(92, 104)">
+                                <circle cx="0" cy="0" r="16" fill="#bd4b6d"/>
+                                <circle cx="0" cy="0" r="11" fill="#db6b8d"/>
+                                <circle cx="0" cy="0" r="6" fill="#f59ab5"/>
+                            </g>
+
+                            <!-- Rosa Secundária Inferior Direita -->
+                            <g transform="translate(128, 104)">
+                                <circle cx="0" cy="0" r="16" fill="#bd4b6d"/>
+                                <circle cx="0" cy="0" r="11" fill="#db6b8d"/>
+                                <circle cx="0" cy="0" r="6" fill="#f59ab5"/>
+                            </g>
+
+                            <!-- Rosa Principal Central -->
+                            <g transform="translate(110, 72)">
+                                <circle cx="0" cy="0" r="24" fill="#b33f62"/>
+                                <circle cx="0" cy="0" r="18" fill="#d15a7d"/>
+                                <circle cx="0" cy="0" r="12" fill="#eb7c9d"/>
+                                <circle cx="0" cy="0" r="6.5" fill="#ffb3c9"/>
+                                <circle cx="0" cy="0" r="2.5" fill="#ffe8ef"/>
+                            </g>
+
+                            <!-- Laço Dourado -->
+                            <path d="M110 140 C96 128 80 134 75 144 C70 154 82 164 98 156 L110 150 L122 156 C138 164 150 154 145 144 C140 134 124 128 110 140 Z" fill="#f0ca86"/>
+                            <path d="M105 150 L86 176 L96 178 L110 153 Z" fill="#d6ae65"/>
+                            <path d="M115 150 L134 176 L124 178 L110 153 Z" fill="#d6ae65"/>
+                            <circle cx="110" cy="147" r="4.5" fill="#ffe2a8"/>
+                        </svg>
+                    </div>
+
+                    <div class="signature-block">
+                        <div class="signature-main">Com carinho, Iza ~~~</div>
+                        <div class="signature-sub">Para meu bem 🤍</div>
+                    </div>
+
+                    <!-- Botão de Bilhete Secreto -->
+                    <button type="button" class="secret-note-trigger" onclick="openSecretModal()">
+                        ✨ Clique para desbloquear mensagem secreta
+                    </button>
+
+                    <!-- Moldura Spotify da Playlist Secreta ("I love you") -->
+                    <div class="vinyl-player-card" style="margin-top: 4px;">
+                        <div class="vinyl-header-strip">
+                            <span class="vinyl-disc-badge">
+                                <span class="mini-vinyl"></span>
+                                Playlist Secreta
+                            </span>
+                            <span>Leia as iniciais 🤍</span>
+                        </div>
+                        <p style="font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 1.05rem; color: var(--rose-soft); padding: 0 4px 8px 4px; line-height: 1.45;">
+                            Uma playlist com algumas músicas que, se ler as iniciais, dizem “I love you”...
+                        </p>
+                        <iframe 
+                            style="border-radius:10px; display:block;" 
+                            src="https://open.spotify.com/embed/playlist/1E4Y0GdkmtariI3QuHfswM?utm_source=generator&theme=0" 
+                            width="100%" 
+                            height="152" 
+                            frameBorder="0" 
+                            allowfullscreen="" 
+                            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+                            loading="lazy">
+                        </iframe>
+                    </div>
+
+                    <!-- Selo Postal / Carimbo de Autenticidade -->
+                    <div class="postal-stamp-row">
+                        <div class="postal-wax-stamp">
+                            <span class="postal-wax-dot">🤍</span>
+                            <span>Selado com carinho • <span id="postalDateText">Hoje</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chapter-nav-footer">
+                    <button class="nav-btn secondary" onclick="prevChapter()" style="max-width: 115px;">← Anterior</button>
+                    <button class="receive-heart-btn" onclick="receiveWithLove()">Recebi com carinho ♥</button>
+                </div>
+            </article>
+        </section>
+
+        <!-- ==========================================
+             TELA FINAL DE CARINHO + CARTÃO LEMBRANÇA
+             ========================================== -->
+        <section id="celebrationScreen" class="celebration-screen">
+            <div class="celebration-heart-circle">🤍</div>
+            <h2 class="celebration-title">Obrigada por ler, meu bem</h2>
+            <p class="celebration-text">
+                Que você sempre se lembre do quanto é especial, admirada e querida. Estarei sempre torcendo por você e pelo seu sorriso.
+            </p>
+
+            <!-- Cartão-Lembrança Colecionável -->
+            <div class="keepsake-card">
+                <div class="keepsake-header">
+                    <span>✦ Lembrança Guardada ✦</span>
+                    <span id="keepsakeDateText">Hoje</span>
+                </div>
+                <div class="keepsake-body">
+                    “Não é sobre uma característica específica. É sobre você, por inteiro.”
+                </div>
+                <div class="keepsake-footer">
+                    <span>De: Iza</span>
+                    <span>Para: meu bem 🤍</span>
+                </div>
+            </div>
+
+            <div class="celebration-actions">
+                <button type="button" class="copy-reply-btn" onclick="copySweetReply()">
+                    💌 Copiar resposta carinhosa para a Iza
+                </button>
+                <div id="copyFeedbackToast" class="copy-feedback-toast" aria-live="polite"></div>
+                <button type="button" class="reread-btn" onclick="rereadLetter()">↺ Reler desde o início</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- MODAL DO BILHETE SECRETO -->
+    <div id="secretModalBackdrop" class="secret-modal-backdrop" onclick="closeSecretModalOnBackdrop(event)">
+        <div class="secret-modal-card" role="dialog" aria-modal="true" aria-labelledby="secretModalTitle">
+            <div style="font-size: 2rem; margin-bottom: 8px;">🕯️🤍</div>
+            <div id="secretModalTitle" class="secret-modal-kicker">Confissão guardada em segredo</div>
+            <p class="secret-modal-quote">
+                “Se um dia você duvidar do seu valor ou achar que seus dias estão pesados demais, volte aqui e lembre que existe alguém que admira cada detalhe seu em silêncio e torce pela sua felicidade todos os dias.”
+            </p>
+            <button type="button" class="primary-pill-btn" onclick="closeSecretModal()">Guardar no coração 🤍</button>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // DATA DINÂMICA NOS SELOS E CARTÃO-LEMBRANÇA
+        // ==========================================
+        (function setFormattedDates() {
+            const now = new Date();
+            const formatted = now.toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric'
+            });
+            const postalEl = document.getElementById('postalDateText');
+            const keepsakeEl = document.getElementById('keepsakeDateText');
+            if (postalEl) postalEl.textContent = formatted;
+            if (keepsakeEl) keepsakeEl.textContent = formatted;
+        })();
+
+        // ==========================================
+        // ÁUDIO AMBIENTE SINTETIZADO (CAIXINHA DE MÚSICA)
+        // ==========================================
+        let audioCtx = null;
+        let isMusicPlaying = false;
+        let musicLoopTimer = null;
+        let stepCounter = 0;
+
+        const musicBoxChords = [
+            [349.23, 440.00, 523.25, 659.25], // Fmaj7
+            [329.63, 392.00, 493.88, 587.33], // Em7
+            [293.66, 349.23, 440.00, 523.25], // Dm7
+            [261.63, 329.63, 392.00, 493.88]  // Cmaj7
+        ];
+
+        function playCelestaNote(freq) {
+            if (!audioCtx || !isMusicPlaying) return;
+            const now = audioCtx.currentTime;
+
+            const osc = audioCtx.createOscillator();
+            const overtone = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now);
+
+            overtone.type = 'triangle';
+            overtone.frequency.setValueAtTime(freq * 2, now);
+
+            const overtoneGain = audioCtx.createGain();
+            overtoneGain.gain.setValueAtTime(0.012, now);
+            overtoneGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.4);
+
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.linearRampToValueAtTime(0.042, now + 0.04);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.4);
+
+            osc.connect(gain);
+            overtone.connect(overtoneGain);
+            overtoneGain.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start(now);
+            overtone.start(now);
+            osc.stop(now + 2.5);
+            overtone.stop(now + 2.5);
+        }
+
+        function updateAudioUI() {
+            const btn = document.getElementById('audioToggleBtn');
+            const label = document.getElementById('audioStatusLabel');
+            if (!btn || !label) return;
+
+            if (isMusicPlaying) {
+                btn.classList.add('playing');
+                label.textContent = 'Música de fundo: Ligada';
+            } else {
+                btn.classList.remove('playing');
+                label.textContent = 'Música de fundo: Desligada';
+            }
+        }
+
+        function startAmbientMusic() {
+            try {
+                if (!audioCtx) {
+                    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                    audioCtx = new AudioContextClass();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                if (isMusicPlaying) return;
+
+                isMusicPlaying = true;
+                updateAudioUI();
+
+                const tick = () => {
+                    if (!isMusicPlaying) return;
+                    const chordIndex = Math.floor(stepCounter / 4) % musicBoxChords.length;
+                    const noteIndex = stepCounter % 4;
+                    playCelestaNote(musicBoxChords[chordIndex][noteIndex]);
+                    stepCounter++;
+                };
+
+                tick();
+                musicLoopTimer = setInterval(tick, 720);
+            } catch (e) {
+                // Ignora silenciosamente caso o navegador bloqueie áudio
+            }
+        }
+
+        function stopAmbientMusic() {
+            isMusicPlaying = false;
+            if (musicLoopTimer) {
+                clearInterval(musicLoopTimer);
+                musicLoopTimer = null;
+            }
+            updateAudioUI();
+        }
+
+        function toggleAmbientMusic() {
+            if (isMusicPlaying) {
+                stopAmbientMusic();
+            } else {
+                startAmbientMusic();
+            }
+        }
+
+        window.addEventListener('blur', () => {
+            if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
+                stopAmbientMusic();
+            }
+        });
+
+        // ==========================================
+        // PARTÍCULAS ATMOSFÉRICAS (STARDUST & PÉTALAS)
+        // ==========================================
+        const canvas = document.getElementById('ambientCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function createParticles() {
+            const count = Math.min(54, Math.floor((window.innerWidth * window.innerHeight) / 16000));
+            particles = [];
+            for (let i = 0; i < count; i++) {
+                const isPetal = i % 3 === 0;
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: isPetal ? (Math.random() * 2.8 + 1.9) : (Math.random() * 1.8 + 0.7),
+                    speedY: -(Math.random() * 0.35 + 0.12),
+                    speedX: (Math.random() - 0.5) * 0.25,
+                    alpha: Math.random() * 0.65 + 0.2,
+                    pulseSpeed: Math.random() * 0.018 + 0.006,
+                    phase: Math.random() * Math.PI * 2,
+                    isPetal
+                });
+            }
+        }
+        createParticles();
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach((p) => {
+                p.x += p.speedX + Math.sin(p.phase) * 0.12;
+                p.y += p.speedY;
+                p.phase += p.pulseSpeed;
+
+                if (p.y < -12) {
+                    p.y = canvas.height + 12;
+                    p.x = Math.random() * canvas.width;
+                }
+                if (p.x < -12) p.x = canvas.width + 12;
+                if (p.x > canvas.width + 12) p.x = -12;
+
+                const currentAlpha = p.alpha * (0.68 + 0.32 * Math.sin(p.phase));
+                ctx.save();
+                ctx.beginPath();
+                if (p.isPetal) {
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.phase * 0.5);
+                    ctx.ellipse(0, 0, p.radius * 1.4, p.radius * 0.85, 0, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 194, 214, ${currentAlpha})`;
+                } else {
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(245, 214, 158, ${currentAlpha})`;
+                }
+                ctx.fill();
+                ctx.restore();
+            });
+
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        // ==========================================
+        // NAVEGAÇÃO ENTRE ENVELOPE, CAPÍTULOS E FINAL
+        // ==========================================
+        const envelopeScreen = document.getElementById('envelopeScreen');
+        const envelope3D = document.getElementById('envelope3D');
+        const readerScreen = document.getElementById('readerScreen');
+        const celebrationScreen = document.getElementById('celebrationScreen');
+        const chapterViews = document.querySelectorAll('.chapter-view');
+        const progressSegments = document.querySelectorAll('.progress-segment');
+        const chapterCounter = document.getElementById('chapterCounter');
+
+        let currentChapter = 0;
+        let isOpened = false;
+
+        function triggerOpenEnvelope() {
+            if (isOpened) return;
+            isOpened = true;
+
+            startAmbientMusic();
+            envelope3D.classList.add('is-opening');
+
+            setTimeout(() => {
+                envelopeScreen.classList.add('fade-out');
+            }, 680);
+
+            setTimeout(() => {
+                envelopeScreen.style.display = 'none';
+                readerScreen.classList.add('active');
+                goToChapter(0);
+            }, 1150);
+        }
+
+        document.querySelector('.envelope-stage').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                triggerOpenEnvelope();
+            }
+        });
+
+        function goToChapter(index) {
+            if (index < 0 || index >= chapterViews.length) return;
+            currentChapter = index;
+
+            chapterViews.forEach((view, idx) => {
+                if (idx === currentChapter) {
+                    view.style.display = 'flex';
+                    view.style.animation = 'none';
+                    view.offsetHeight;
+                    view.style.animation = 'chapterFadeIn 0.45s cubic-bezier(0.22, 1, 0.36, 1)';
+                    const scrollArea = view.querySelector('.chapter-scroll-area');
+                    if (scrollArea) scrollArea.scrollTop = 0;
+                } else {
+                    view.style.display = 'none';
+                }
+            });
+
+            progressSegments.forEach((seg, idx) => {
+                seg.classList.toggle('active', idx === currentChapter);
+                seg.classList.toggle('completed', idx < currentChapter);
+            });
+
+            chapterCounter.textContent = `Capítulo ${currentChapter + 1} de ${chapterViews.length}`;
+        }
+
+        function nextChapter() {
+            if (currentChapter < chapterViews.length - 1) {
+                goToChapter(currentChapter + 1);
+            }
+        }
+
+        function prevChapter() {
+            if (currentChapter > 0) {
+                goToChapter(currentChapter - 1);
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (!readerScreen.classList.contains('active')) return;
+            if (e.key === 'ArrowRight') {
+                nextChapter();
+            } else if (e.key === 'ArrowLeft') {
+                prevChapter();
+            }
+        });
+
+        // ==========================================
+        // GESTOS DE SWIPE NO CELULAR (TROCAR PÁGINA)
+        // ==========================================
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        readerScreen.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, { passive: true });
+
+        readerScreen.addEventListener('touchend', (e) => {
+            const deltaX = e.changedTouches[0].screenX - touchStartX;
+            const deltaY = e.changedTouches[0].screenY - touchStartY;
+
+            if (Math.abs(deltaX) > 55 && Math.abs(deltaX) > Math.abs(deltaY) * 1.4) {
+                if (deltaX < 0) {
+                    nextChapter();
+                } else {
+                    prevChapter();
+                }
+            }
+        }, { passive: true });
+
+        // ==========================================
+        // INTERATIVIDADE DAS TAGS DO CAPÍTULO IV
+        // ==========================================
+        const tagNotesData = {
+            jeitinho: {
+                title: '✨ Sobre o seu jeitinho',
+                text: '“É impossível não sorrir quando penso nas suas manias e no jeito único como você enxerga o mundo.”'
+            },
+            essencia: {
+                title: '🤍 Sobre a sua essência',
+                text: '“Você tem uma luz rara e genuína, daquelas que acalmam e deixam tudo ao redor mais bonito sem nem fazer esforço.”'
+            },
+            inteiro: {
+                title: '🌹 Sobre você por inteiro',
+                text: '“Não falta nada em você. Até nos dias em que você duvida de si mesma, continua sendo extraordinária aos meus olhos.”'
+            },
+            voz: {
+                title: '🌙 Sobre a sua voz & calma',
+                text: '“Ouvir você falar tem o poder de transformar qualquer dia comum no meu momento favorito.”'
+            }
+        };
+
+        function spawnGoldSparklesAt(x, y) {
+            const sparkles = ['✨', '✦', '🤍'];
+            for (let i = 0; i < 8; i++) {
+                const sp = document.createElement('span');
+                sp.className = 'burst-particle';
+                sp.textContent = sparkles[i % sparkles.length];
+                sp.style.fontSize = '0.95rem';
+                sp.style.left = `${x}px`;
+                sp.style.top = `${y}px`;
+                sp.style.setProperty('--tx', `${(Math.random() - 0.5) * 110}px`);
+                sp.style.setProperty('--ty', `${-(45 + Math.random() * 75)}px`);
+                sp.style.setProperty('--rot', `${(Math.random() - 0.5) * 80}deg`);
+                sp.style.setProperty('--dur', `1.3s`);
+                document.body.appendChild(sp);
+                setTimeout(() => sp.remove(), 1350);
+            }
+        }
+
+        function revealTagNote(btnEl, key, event) {
+            const data = tagNotesData[key];
+            if (!data) return;
+
+            document.querySelectorAll('.essence-pill').forEach((p) => p.classList.remove('selected'));
+            btnEl.classList.add('selected');
+
+            const card = document.getElementById('tagNoteCard');
+            const titleEl = document.getElementById('tagNoteTitle');
+            const bodyEl = document.getElementById('tagNoteBody');
+
+            titleEl.textContent = data.title;
+            bodyEl.textContent = data.text;
+
+            card.classList.remove('visible');
+            void card.offsetWidth;
+            card.classList.add('visible');
+
+            const rect = btnEl.getBoundingClientRect();
+            const clickX = event && event.clientX ? event.clientX : rect.left + rect.width / 2;
+            const clickY = event && event.clientY ? event.clientY : rect.top;
+            spawnGoldSparklesAt(clickX, clickY);
+        }
+
+        // ==========================================
+        // MODAL DO BILHETE SECRETO (CAPÍTULO V)
+        // ==========================================
+        function openSecretModal() {
+            const modal = document.getElementById('secretModalBackdrop');
+            if (modal) modal.classList.add('open');
+        }
+
+        function closeSecretModal() {
+            const modal = document.getElementById('secretModalBackdrop');
+            if (modal) modal.classList.remove('open');
+        }
+
+        function closeSecretModalOnBackdrop(event) {
+            if (event.target && event.target.id === 'secretModalBackdrop') {
+                closeSecretModal();
+            }
+        }
+
+        // ==========================================
+        // CELEBRAÇÃO FINAL ("Recebi com carinho ♥")
+        // ==========================================
+        function spawnHeartBurst() {
+            const symbols = ['🤍', '🌸', '✨', '💗', '🌷'];
+            const total = 28;
+
+            for (let i = 0; i < total; i++) {
+                const el = document.createElement('span');
+                el.className = 'burst-particle';
+                el.textContent = symbols[i % symbols.length];
+
+                const startX = window.innerWidth * (0.15 + Math.random() * 0.7);
+                const startY = window.innerHeight * (0.55 + Math.random() * 0.3);
+                const tx = (Math.random() - 0.5) * 220;
+                const ty = -(180 + Math.random() * 240);
+                const rot = (Math.random() - 0.5) * 90;
+                const dur = 2.4 + Math.random() * 1.4;
+
+                el.style.left = `${startX}px`;
+                el.style.top = `${startY}px`;
+                el.style.setProperty('--tx', `${tx}px`);
+                el.style.setProperty('--ty', `${ty}px`);
+                el.style.setProperty('--rot', `${rot}deg`);
+                el.style.setProperty('--dur', `${dur}s`);
+
+                document.body.appendChild(el);
+                setTimeout(() => el.remove(), dur * 1000);
+            }
+        }
+
+        function receiveWithLove() {
+            spawnHeartBurst();
+            readerScreen.classList.remove('active');
+            readerScreen.style.display = 'none';
+            celebrationScreen.classList.add('active');
+        }
+
+        function copySweetReply() {
+            const replyMessage = 'Li sua cartinha e meu coração ficou quentinho 🤍';
+            const toast = document.getElementById('copyFeedbackToast');
+
+            const textarea = document.createElement('textarea');
+            textarea.value = replyMessage;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+
+            try {
+                document.execCommand('copy');
+                if (toast) {
+                    toast.textContent = '✓ Mensagem copiada! Agora é só colar no WhatsApp da Iza 🤍';
+                }
+            } catch (err) {
+                if (toast) {
+                    toast.textContent = `Envie para a Iza: "${replyMessage}"`;
+                }
+            } finally {
+                document.body.removeChild(textarea);
+            }
+        }
+
+        function rereadLetter() {
+            celebrationScreen.classList.remove('active');
+            readerScreen.style.display = 'flex';
+            setTimeout(() => {
+                readerScreen.classList.add('active');
+                goToChapter(0);
+            }, 20);
+        }
+    </script>
+</body>
+</html>
